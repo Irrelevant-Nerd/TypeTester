@@ -1,0 +1,3 @@
+C:/Users/THIS PC/Documents/code/personal/c/console-based/TypeTester/build/CMakeFiles/TypeTester.dir
+C:/Users/THIS PC/Documents/code/personal/c/console-based/TypeTester/build/CMakeFiles/edit_cache.dir
+C:/Users/THIS PC/Documents/code/personal/c/console-based/TypeTester/build/CMakeFiles/rebuild_cache.dir
