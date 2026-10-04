@@ -1,3 +1,0 @@
-"C:\Program Files\CMake\bin\cmake.exe" -E rm -f CMakeFiles\TypeTester.dir/objects.a
-C:\msys64\mingw64\bin\ar.exe qc CMakeFiles\TypeTester.dir/objects.a @CMakeFiles\TypeTester.dir\objects1.rsp
-C:\msys64\mingw64\bin\gcc.exe -Wl,--whole-archive CMakeFiles\TypeTester.dir/objects.a -Wl,--no-whole-archive -o TypeTester.exe -Wl,--out-implib,libTypeTester.dll.a -Wl,--major-image-version,0,--minor-image-version,0 @CMakeFiles\TypeTester.dir\linkLibs.rsp
