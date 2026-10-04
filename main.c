@@ -31,20 +31,6 @@ void tokenize(char* buffer, char* string, TokenizeText* tokenize_text)
   tokenize_text->_count = count;
 }
 
-void print(TokenizeText* tokenize_text)
-{
-  for(size_t i = 0; i < tokenize_text->_count; i++)
-  {
-    if(*tokenize_text->_tokens[i] == '\0')
-    {
-      break;
-    }
-    printf("%s ", tokenize_text->_tokens[i]);
-  }
-  printf("\n");
-}
-
-
 typedef LARGE_INTEGER lint;
 
 double convert_to_sec(lint* frequency, lint* t1, lint* t2)
@@ -52,17 +38,41 @@ double convert_to_sec(lint* frequency, lint* t1, lint* t2)
   return ((t2->QuadPart - t1->QuadPart) * 1000.0 / frequency->QuadPart) / 1000.0;
 }
 
-int calculate_wpm(TokenizeText* tokenize_text, double seconds)
+int get_raw_wpm(TokenizeText* tokenize_text, double seconds)
 {
   // count = total words read
   return (tokenize_text->_count / seconds) * 60;
 }
 
+double get_accuracy(TokenizeText* ref_text, TokenizeText* user_text)
+{
+  int corrects = 0;
+  int attempts = 0;
+
+  for(size_t i = 0; i < ref_text->_count; i++)
+  {
+    if(strcmp(ref_text->_tokens[i], user_text->_tokens[i]) == 0)
+    {
+      corrects+=1;
+    }
+    attempts+=1;
+  }
+  return ( (double) corrects / (double) attempts) * 100;
+}
+
+int get_adjusted_wpm(int raw_wpm, double accuracy)
+{
+  return (int) raw_wpm * (accuracy / 100.0);
+}
+
 int main(void)
 {
-  char buffer[MAX_BUFFER];
+  char ref_buffer[MAX_BUFFER];
+  char user_buffer[MAX_BUFFER];
 
-  char* text = "We use clocks everyday to read time.\nAn analog clock is an instrument or tool used to measure time in which the hours, minutes, and seconds are indicated by hands on a dial.\nThe second hand moves around the fastest and shows the number of seconds passed in the current minute. ";
+  char* text = "Coffees are good, teas are mid, and water is essential for survival.";
+  TokenizeText ref_tokenize_text;
+  tokenize(ref_buffer, text, &ref_tokenize_text);
 
   lint frequency;
   lint t1, t2;  // ticks - tracking system time
@@ -78,18 +88,22 @@ int main(void)
   printf("START TYPING!!!\n");
   printf("%s\n", text);
   printf(">>> ");
-  char* input_text = scan(buffer, sizeof(buffer));
+  char* user_text = scan(user_buffer, sizeof(user_buffer));
   TokenizeText user_tokenize_text;
-  tokenize(buffer, input_text, &user_tokenize_text);
 
-  print(&user_tokenize_text);
+  tokenize(user_buffer, user_text, &user_tokenize_text);
 
-  // stop
+  // stops
   QueryPerformanceCounter(&t2);
 
   double seconds = convert_to_sec(&frequency, &t1, &t2);
-  printf("%.2f sec\n", seconds);
-  printf("WPM: %d\n", calculate_wpm(&user_tokenize_text, seconds));
+  int raw_wpm = get_raw_wpm(&user_tokenize_text, seconds);
+  double accuracy = get_accuracy(&ref_tokenize_text, &user_tokenize_text);
+  int adjusted_wpm = get_adjusted_wpm(raw_wpm, accuracy);
+
+  printf("WPM: %d\n", adjusted_wpm);
+  printf("Accuracy: %.2f%%\n", accuracy);
+  printf("Raw WPM: %d\n", raw_wpm);
 
   return 0;
 }
