@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <scan_input.h>
 #include <string.h>
-
+#include <time.h>
 #include <windows.h>
 
 #define MAX_BUFFER 128
@@ -16,7 +16,7 @@ typedef struct
 
 } TokenizeText;
 
-void tokenize(char* buffer, char* string, TokenizeText* tokenize_text)
+void tokenize(char* buffer, const char* string, TokenizeText* tokenize_text)
 {
   strcpy(buffer, string); // making a copy of string inside the buffer
   char* token = strtok(buffer, " "); // whitespace is going to be the delimiter
@@ -101,13 +101,42 @@ TokenizeText initialize_tokenize_text()
 
   return tokenize_text;
 }
+int generate_random_index(size_t text_count)
+{
+  size_t index = rand() % text_count;
+  return index;
 
+}
 int main(void)
 {
+  srand((unsigned) time(NULL));
   char ref_buffer[MAX_BUFFER];
   char user_buffer[MAX_BUFFER];
-
-  char* text = "Coffees are good, teas are mid, and water is essential for survival.";
+  const char* texts[] =
+  {
+    "Coffees are good, teas are mid, and water is essential for survival.",
+    "The quick brown fox jumps over the lazy dog near the river bank.",
+    "Practice makes progress, and progress makes you faster over time.",
+    "A small bug can hide in a large program for a very long time.",
+    "Rain tapped on the window while the old clock kept ticking softly.",
+    "Never trust a computer that you cannot throw out of a window.",
+    "Learning to code is like learning to ride a bike, just with more errors.",
+    "The library was quiet except for the sound of turning pages.",
+    "Good code is simple, readable, and does exactly what it says.",
+    "She packed her bag, grabbed her keys, and walked into the cold morning.",
+    "Every expert was once a beginner who refused to quit.",
+    "Pizza, pasta, and ice cream make a pretty great weekend menu.",
+    "The train arrived late, but the view from the window was worth the wait.",
+    "Memory leaks are quiet, but they eventually make the loudest crashes.",
+    "Stars filled the sky as we sat around the fire telling old stories.",
+    "Debugging is twice as hard as writing code, so write simple code.",
+    "The market was busy with people buying fruit, bread, and fresh flowers.",
+    "Typing fast is nice, but typing accurately is what really counts.",
+    "A calm mind and a steady rhythm will beat panic every single time.",
+    "The cat watched the rain, yawned once, and went back to sleep."
+  };
+  size_t text_count = sizeof(texts) / sizeof(texts[0]);
+  const char* text = texts[generate_random_index(text_count)];
   TokenizeText ref_tokenize_text = initialize_tokenize_text();
   tokenize(ref_buffer, text, &ref_tokenize_text);
 
