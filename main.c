@@ -10,25 +10,50 @@
 
 typedef struct
 {
-  char* _tokens[TOKENS_CAPACITY];
+  char** _tokens;
+  size_t _capacity;
   size_t _count; // how many elements are there in tokens
+
 } TokenizeText;
 
 void tokenize(char* buffer, char* string, TokenizeText* tokenize_text)
 {
-  size_t count = 0; // count the amount of token that is going to be stored in tokens
-
   strcpy(buffer, string); // making a copy of string inside the buffer
   char* token = strtok(buffer, " "); // whitespace is going to be the delimiter
 
-  for(size_t i = 0; token != NULL && i < TOKENS_CAPACITY; i++)
+  while(token != NULL)
   {
-    tokenize_text->_tokens[i] = token;
-    count++;
+    // if count is equal or exceeds the capacity, execute this
+    if(tokenize_text->_count >= tokenize_text->_capacity)
+    {
+      size_t new_capacity = tokenize_text->_capacity * 2;
+      char** temp = realloc(tokenize_text->_tokens, new_capacity * sizeof(char*));
+
+      if(temp == NULL)
+      {
+        return;
+      }
+
+      tokenize_text->_tokens = temp;
+
+      tokenize_text->_capacity = new_capacity;
+    }
+    tokenize_text->_tokens[tokenize_text->_count] = token;
+    tokenize_text->_count += 1;
     token = strtok(NULL, " ");
   }
 
-  tokenize_text->_count = count;
+  for(size_t i = 0; token != NULL && i < tokenize_text->_capacity; i++)
+  {
+    if(tokenize_text->_count > tokenize_text->_capacity)
+    {
+      tokenize_text->_capacity *= 2;
+      tokenize_text->_tokens = realloc(tokenize_text->_tokens, sizeof(tokenize_text->_tokens) * tokenize_text->_capacity + sizeof(tokenize_text->_tokens));
+    }
+    tokenize_text->_tokens[i] = token;
+    tokenize_text->_count += 1;
+    token = strtok(NULL, " ");
+  }
 }
 
 typedef LARGE_INTEGER lint;
@@ -57,12 +82,24 @@ double get_accuracy(TokenizeText* ref_text, TokenizeText* user_text)
     }
     attempts+=1;
   }
-  return ( (double) corrects / (double) attempts) * 100;
+  return ( (double) corrects / (double) attempts) * 100; // converted to percent
 }
 
 int get_adjusted_wpm(int raw_wpm, double accuracy)
 {
-  return (int) raw_wpm * (accuracy / 100.0);
+  return (int) raw_wpm * (accuracy / 100.0); // the accuracy is converted back to decimals
+}
+
+TokenizeText initialize_tokenize_text()
+{
+  TokenizeText tokenize_text;
+
+  tokenize_text._capacity = TOKENS_CAPACITY;
+  tokenize_text._count = 0;
+
+  tokenize_text._tokens = malloc(tokenize_text._capacity * sizeof(char*));
+
+  return tokenize_text;
 }
 
 int main(void)
@@ -71,13 +108,13 @@ int main(void)
   char user_buffer[MAX_BUFFER];
 
   char* text = "Coffees are good, teas are mid, and water is essential for survival.";
-  TokenizeText ref_tokenize_text;
+  TokenizeText ref_tokenize_text = initialize_tokenize_text();
   tokenize(ref_buffer, text, &ref_tokenize_text);
 
   lint frequency;
   lint t1, t2;  // ticks - tracking system time
-                         // t1 - start
-                         // t2 - stop
+                // t1 - start
+                // t2 - stop
 
   QueryPerformanceFrequency(&frequency);
 
@@ -89,7 +126,7 @@ int main(void)
   printf("%s\n", text);
   printf(">>> ");
   char* user_text = scan(user_buffer, sizeof(user_buffer));
-  TokenizeText user_tokenize_text;
+  TokenizeText user_tokenize_text = initialize_tokenize_text();
 
   tokenize(user_buffer, user_text, &user_tokenize_text);
 
