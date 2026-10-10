@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <scan_input.h>
 #include <string.h>
+#include <stdbool.h>
 #include <time.h>
 #include <windows.h>
 
@@ -103,16 +104,52 @@ TokenizeText initialize_tokenize_text()
 }
 int generate_random_index(size_t text_count)
 {
-  size_t index = rand() % text_count;
-  return index;
+  return rand() % text_count;
+}
+bool iswhitespace(char c)
+{
+  return c == ' ' || c == '\t';
+}
+bool is_quit(const char* s)
+{
+  // ignore any whitespace
+  while(iswhitespace(*s))
+  {
+    s++;
+  }
 
+  if(*s == 'n' || *s == 'N')
+  {
+    s++;
+  }
+
+  // if char does not equal to any of these, return false
+  else
+  {
+    return false;
+  }
+
+  while(iswhitespace(*s))
+  {
+    s++;
+  }
+
+  // if end of the string, return true
+  return *s == '\0';
+}
+char* generate_random_text(char** texts, size_t text_count)
+{
+  char* text = texts[generate_random_index(text_count)];
+  return text;
 }
 int main(void)
 {
   srand((unsigned) time(NULL));
   char ref_buffer[MAX_BUFFER];
   char user_buffer[MAX_BUFFER];
-  const char* texts[] =
+
+  // we randomly pick a sentence within this array of texts
+  char* texts[] =
   {
     "Coffees are good, teas are mid, and water is essential for survival.",
     "The quick brown fox jumps over the lazy dog near the river bank.",
@@ -136,7 +173,7 @@ int main(void)
     "The cat watched the rain, yawned once, and went back to sleep."
   };
   size_t text_count = sizeof(texts) / sizeof(texts[0]);
-  const char* text = texts[generate_random_index(text_count)];
+  char* text = generate_random_text(texts, text_count);
   TokenizeText ref_tokenize_text = initialize_tokenize_text();
   tokenize(ref_buffer, text, &ref_tokenize_text);
 
@@ -146,30 +183,39 @@ int main(void)
                 // t2 - stop
 
   QueryPerformanceFrequency(&frequency);
+  while(true)
+  {
+    // start
+    QueryPerformanceCounter(&t1);
 
-  // start
-  QueryPerformanceCounter(&t1);
+    // do something
+    printf("START TYPING!!!\n");
+    printf("%s\n", text);
+    printf(">>> ");
+    char* user_text = scan(user_buffer, sizeof(user_buffer));
+    TokenizeText user_tokenize_text = initialize_tokenize_text();
 
-  // do something
-  printf("START TYPING!!!\n");
-  printf("%s\n", text);
-  printf(">>> ");
-  char* user_text = scan(user_buffer, sizeof(user_buffer));
-  TokenizeText user_tokenize_text = initialize_tokenize_text();
+    tokenize(user_buffer, user_text, &user_tokenize_text);
 
-  tokenize(user_buffer, user_text, &user_tokenize_text);
+    // stops
+    QueryPerformanceCounter(&t2);
 
-  // stops
-  QueryPerformanceCounter(&t2);
+    double seconds = convert_to_sec(&frequency, &t1, &t2);
+    int raw_wpm = get_raw_wpm(&user_tokenize_text, seconds);
+    double accuracy = get_accuracy(&ref_tokenize_text, &user_tokenize_text);
+    int adjusted_wpm = get_adjusted_wpm(raw_wpm, accuracy);
 
-  double seconds = convert_to_sec(&frequency, &t1, &t2);
-  int raw_wpm = get_raw_wpm(&user_tokenize_text, seconds);
-  double accuracy = get_accuracy(&ref_tokenize_text, &user_tokenize_text);
-  int adjusted_wpm = get_adjusted_wpm(raw_wpm, accuracy);
+    printf("WPM: %d\n", adjusted_wpm);
+    printf("Accuracy: %.2f%%\n", accuracy);
+    printf("Raw WPM: %d\n", raw_wpm);
 
-  printf("WPM: %d\n", adjusted_wpm);
-  printf("Accuracy: %.2f%%\n", accuracy);
-  printf("Raw WPM: %d\n", raw_wpm);
-
+    printf("\nDo you want to start typing again? [y/n]: ");
+    char* choice = scan(user_buffer, sizeof(user_buffer));
+    if(is_quit(choice))
+    {
+      break;
+    }
+    text = generate_random_text(texts, text_count);
+  }
   return 0;
 }
