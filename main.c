@@ -139,15 +139,14 @@ bool is_quit(const char* s)
 }
 char* generate_random_text(char** texts, size_t text_count)
 {
-  char* text = texts[generate_random_index(text_count)];
-  return text;
+  return texts[generate_random_index(text_count)];
 }
 int main(void)
 {
   srand((unsigned) time(NULL));
   char ref_buffer[MAX_BUFFER];
   char user_buffer[MAX_BUFFER];
-
+  char choice_buffer[4];
   // we randomly pick a sentence within this array of texts
   char* texts[] =
   {
@@ -177,14 +176,15 @@ int main(void)
   TokenizeText ref_tokenize_text = initialize_tokenize_text();
   tokenize(ref_buffer, text, &ref_tokenize_text);
 
-  lint frequency;
-  lint t1, t2;  // ticks - tracking system time
-                // t1 - start
-                // t2 - stop
-
-  QueryPerformanceFrequency(&frequency);
   while(true)
   {
+    lint frequency;
+    lint t1, t2;  // ticks - tracking system time
+                  // t1 - start
+                  // t2 - stop
+
+    QueryPerformanceFrequency(&frequency);
+
     // start
     QueryPerformanceCounter(&t1);
 
@@ -210,12 +210,21 @@ int main(void)
     printf("Raw WPM: %d\n", raw_wpm);
 
     printf("\nDo you want to start typing again? [y/n]: ");
-    char* choice = scan(user_buffer, sizeof(user_buffer));
+    char* choice = scan(choice_buffer, sizeof(choice_buffer));
+
     if(is_quit(choice))
     {
+      // free the memory before we break from loop to avoid memory leak
+      free(ref_tokenize_text._tokens);
+      free(user_tokenize_text._tokens);
       break;
     }
+    free(user_tokenize_text._tokens);
+
     text = generate_random_text(texts, text_count);
+    free(ref_tokenize_text._tokens);
+    ref_tokenize_text = initialize_tokenize_text();
+    tokenize(ref_buffer, text, &ref_tokenize_text);
   }
   return 0;
 }
