@@ -141,6 +141,12 @@ char* generate_random_text(char** texts, size_t text_count)
 {
   return texts[generate_random_index(text_count)];
 }
+void free_memory(TokenizeText* ref_tokenize_text, TokenizeText* user_tokenize_text)
+{
+  free(ref_tokenize_text->_tokens);
+  free(user_tokenize_text->_tokens);
+}
+
 int main(void)
 {
   srand((unsigned) time(NULL));
@@ -205,6 +211,7 @@ int main(void)
     double accuracy = get_accuracy(&ref_tokenize_text, &user_tokenize_text);
     int adjusted_wpm = get_adjusted_wpm(raw_wpm, accuracy);
 
+    // give result
     printf("WPM: %d\n", adjusted_wpm);
     printf("Accuracy: %.2f%%\n", accuracy);
     printf("Raw WPM: %d\n", raw_wpm);
@@ -215,14 +222,12 @@ int main(void)
     if(is_quit(choice))
     {
       // free the memory before we break from loop to avoid memory leak
-      free(ref_tokenize_text._tokens);
-      free(user_tokenize_text._tokens);
+      free_memory(&ref_tokenize_text, &user_tokenize_text);
       break;
     }
-    free(user_tokenize_text._tokens);
 
     text = generate_random_text(texts, text_count);
-    free(ref_tokenize_text._tokens);
+    free_memory(&ref_tokenize_text, &user_tokenize_text);
     ref_tokenize_text = initialize_tokenize_text();
     tokenize(ref_buffer, text, &ref_tokenize_text);
   }
